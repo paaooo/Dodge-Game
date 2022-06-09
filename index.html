@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dodge Game</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <canvas></canvas>
+</body>
+<!-- This is ordered in a way so that the main file could call anything in terms of other files, and the centering file centers everything after everything loads/executes -->
+<!-- Also not inside the head tag so I don't have to put everything inside an onload function -->
+<script src="classes.js"></script>
+<script src="script.js" type="module"></script>
+<script src="center.js"></script>
+</html>
