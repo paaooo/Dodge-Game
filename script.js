@@ -15,15 +15,22 @@ window.onload = () => {
 
     function frameInterval() { // Frames for image animations
         var currentAnim = hero.anim.currentSprite;
+        var end = () => {
+            // resets the animation interval when animation changes
+            clearInterval(anim);
+            hero.anim.frames = 0;
+            frameInterval();
+        }
         let anim = setInterval(() => {
             if (currentAnim === hero.anim.currentSprite) { // checks if animation changed
                 hero.anim.frames++; // moves on to next frame
+                if(currentAnim === sprite.slice.right && hero.anim.frames === hero.anim.maxFrames) { // If slice animation finished once
+                    hero.slicing = false;
+                    end();
+                }
                 hero.anim.frames %= hero.anim.maxFrames; // resets animation after all frames ends
             } else {
-                // resets the animation interval when animation changes
-                clearInterval(anim);
-                hero.anim.frames = 0;
-                frameInterval();
+                end();
             }
         }, hero.anim.speed);
     }
@@ -37,6 +44,9 @@ window.onload = () => {
             pressed: false
         },
         up: {
+            pressed: false
+        },
+        slice: {
             pressed: false
         }
     }
@@ -54,6 +64,7 @@ window.onload = () => {
 
         // inputs
         if ((moveKeys.left.pressed && moveKeys.right.pressed) || (!moveKeys.left.pressed && !moveKeys.right.pressed)) { // for when both keys are pressed or none
+            // idle
             hero.velocity.x = 0;
             // sets hero animation to idle depending on which direction
             hero.anim.speed = 60;
@@ -61,14 +72,17 @@ window.onload = () => {
             hero.anim.cropy = 27;
             hero.anim.width = 23;
             hero.anim.height = 32;
-            if (hero.anim.direction === 'right') {
+            if (hero.anim.direction === 'right') { // which direction the hero is facing
+                hero.anim.frameSkip = 80;
                 hero.anim.cropx = 18;
                 hero.anim.currentSprite = sprite.idle.right;
             } else {
-                hero.anim.cropx = 39;
+                hero.anim.frameSkip = -80;
+                hero.anim.cropx = 1398;
                 hero.anim.currentSprite = sprite.idle.left;
             }
         } else { // when left or right key is pressed
+            // moving
             hero.anim.speed = 25;
             hero.anim.maxFrames = 24;
             hero.anim.cropy = 22;
@@ -77,21 +91,34 @@ window.onload = () => {
             if (moveKeys.right.pressed) { // when right key is pressed
                 hero.velocity.x = hero.speed;
                 // sets hero animation to run
+                hero.anim.frameSkip = 80;
                 hero.anim.direction = 'right';
                 hero.anim.cropx = 18;
                 hero.anim.currentSprite = sprite.run.right;
             } else { // when left key is pressed
                 hero.velocity.x = -hero.speed;
                 // sets hero animation to run
+                hero.anim.frameSkip = -80;
                 hero.anim.direction = 'left';
-                hero.anim.cropx = 37;
+                hero.anim.cropx = 1878;
                 hero.anim.currentSprite = sprite.run.left;
             }
 
         }
+        // slicing - overrides current animation
+        if(hero.slicing) {
+            hero.anim.frameSkip = 110;
+            hero.anim.speed = 40;
+            hero.anim.maxFrames = 7;
+            hero.anim.cropx = 26;
+            hero.anim.cropy = 37;
+            hero.anim.width = 55;
+            hero.anim.height = 37;
+            hero.anim.currentSprite = sprite.slice.right;
+        }
         //jumping
         if (moveKeys.up.pressed && // up key pressed
-            (hero.velocity.y === 0 || hero.velocity.y === gravity)) { // if the velocity is 0 (bottom) or equals to gravity (on a platform but doesn't move)
+            (hero.velocity.y === gravity)) { // if the velocity is 0 (bottom) or equals to gravity (on a platform but doesn't move)
             hero.velocity.y -= hero.jumpHeight;
         }
 
@@ -125,7 +152,11 @@ window.onload = () => {
                 moveKeys.up.pressed = true;
                 break;
             case "KeyS":
-                console.log("s");
+                if (!moveKeys.slice.pressed) { // if the player already sliced this won't activate
+                    hero.slicing = true;
+                    moveKeys.slice.pressed = true;
+                    setTimeout(() => { moveKeys.slice.pressed = false; }, 1000) // sets up the cooldown for slicing
+                }
                 break;
             case "KeyA":
                 moveKeys.left.pressed = true;

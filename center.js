@@ -10,4 +10,6 @@ function centerElement(element) {
 }
 
 centerElement("canvas");
-window.onresize = () => centerElement("canvas");
+centerElement("Start");
+
+window.onresize = () => { centerElement("canvas"); centerElement("Start"); }

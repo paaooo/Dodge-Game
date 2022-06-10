@@ -6,7 +6,7 @@ var c = canvas.getContext('2d');
 canvas.width = 1366;
 canvas.height = 786;
 
-var gravity = .4;
+var gravity = .35;
 
 function makeImage(path) {
     let image = new Image();
@@ -34,7 +34,10 @@ var sprite = {
     run: {
         right: makeImage('images/run-right.png'),
         left: makeImage('images/run-left.png')
-    } 
+    },
+    slice: {
+        right: makeImage('images/slice-right.png')
+    }
 }
 
 class Hero {
@@ -48,12 +51,15 @@ class Hero {
             x: 0,
             y: 0
         }
-        this.speed = 5.2;
-        this.jumpHeight = 13.5;
+        this.speed = 4.5;
+        this.jumpHeight = 12;
         this.width = 40;
-        this.height = 59;
+        this.height = 60;
+
+        this.slicing = false; // this decides if the player is slicing or not
 
         this.anim = { // these are all the variables used for sprite animation
+            frameSkip: 80,
             direction: 'right',
             speed: 60,
             frames: 0,
@@ -69,7 +75,7 @@ class Hero {
         // c.fillRect(this.position.x, this.position.y, this.width, this.height); // draws where the current player is
         c.drawImage(
             this.anim.currentSprite,
-            this.anim.cropx + (this.anim.frames * 80), // crop position x
+            this.anim.cropx + (this.anim.frames * this.anim.frameSkip), // crop position x
             this.anim.cropy, // crop position y
             this.anim.width, // image width
             this.anim.height, // image height
@@ -81,17 +87,11 @@ class Hero {
     }
     update() {
         this.draw();
-        if (this.position.x + this.width + this.velocity.x >= this.width && this.position.x + this.width + this.velocity.x <= canvas.width) {
-            this.position.x += this.velocity.x;
-            // console.log("moving");
-        }
-
+        // movement
+        this.position.x += this.velocity.x;
+        // gravity & jumping
         this.position.y += this.velocity.y;
-        if (this.position.y + this.height + this.velocity.y <= canvas.height) { // makes sure the entire character is at the bottom
-            this.velocity.y += gravity;
-        } else {
-            this.velocity.y = 0;
-        }
+        this.velocity.y += gravity;
 
     }
 }
