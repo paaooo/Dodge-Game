@@ -36,6 +36,7 @@ var sprite = {
         left: makeImage('images/run-left.png')
     },
     slice: {
+        left: makeImage('images/slice-left.png'),
         right: makeImage('images/slice-right.png')
     }
 }
@@ -53,8 +54,8 @@ class Hero {
         }
         this.speed = 4.5;
         this.jumpHeight = 12;
-        this.width = 40;
-        this.height = 60;
+        this.width = 46;
+        this.height = 64;
 
         this.slicing = false; // this decides if the player is slicing or not
 
@@ -71,28 +72,44 @@ class Hero {
             currentSprite: sprite.idle.right
         }
     }
-    draw() {
-        // c.fillRect(this.position.x, this.position.y, this.width, this.height); // draws where the current player is
-        c.drawImage(
-            this.anim.currentSprite,
-            this.anim.cropx + (this.anim.frames * this.anim.frameSkip), // crop position x
-            this.anim.cropy, // crop position y
-            this.anim.width, // image width
-            this.anim.height, // image height
-            this.position.x,
-            this.position.y,
-            this.width,
-            this.height
-        );
-    }
     update() {
-        this.draw();
         // movement
         this.position.x += this.velocity.x;
         // gravity & jumping
         this.position.y += this.velocity.y;
         this.velocity.y += gravity;
 
+    }
+}
+class HeroAnimation { // so the actual animation doesn't change the hitbox of the character
+    constructor() {
+        this.animX = 1000;
+        this.animY = 600;
+        this.frameSkip = 80;
+        this.direction = 'right';
+        this.speed = 60;
+        this.frames = 0;
+        this.maxFrames = 17;
+        this.cropx = 18;
+        this.cropy = 27;
+        this.width = 23;
+        this.height = 32;
+        this.currentSprite = sprite.idle.right;
+    }
+    drawAnimation(x, y) {
+        this.animX = x - (this.width - 23);
+        this.animY = y - ((this.height - 32) * 2);
+        c.drawImage(
+            this.currentSprite,
+            this.cropx + (this.frames * this.frameSkip), // crop position x
+            this.cropy, // crop position y
+            this.width, // image width
+            this.height, // image height
+            this.animX,
+            this.animY,
+            this.width * 2,
+            this.height * 2
+        );
     }
 }
 
@@ -109,7 +126,6 @@ class Platform {
     }
     draw() {
         c.drawImage(this.image, this.position.x, this.position.y);
-        // c.fillRect(this.position.x, this.position.y, this.width, this.height);
     }
 }
 

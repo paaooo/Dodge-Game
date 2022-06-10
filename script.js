@@ -2,6 +2,7 @@
 // Basically calls everything into place
 window.onload = () => {
     const hero = new Hero(); // creates character
+    const heroAnimation = new HeroAnimation();
     const platforms = [
         new Platform(512, 530, terrain.platform1),
         new Platform(545, 290, terrain.platform2),
@@ -14,25 +15,30 @@ window.onload = () => {
     const sky = new Background(terrain.sky); // creates sky / background for background
 
     function frameInterval() { // Frames for image animations
-        var currentAnim = hero.anim.currentSprite;
+        var currentAnim = heroAnimation.currentSprite;
         var end = () => {
             // resets the animation interval when animation changes
             clearInterval(anim);
-            hero.anim.frames = 0;
             frameInterval();
         }
+        
         let anim = setInterval(() => {
-            if (currentAnim === hero.anim.currentSprite) { // checks if animation changed
-                hero.anim.frames++; // moves on to next frame
-                if(currentAnim === sprite.slice.right && hero.anim.frames === hero.anim.maxFrames) { // If slice animation finished once
-                    hero.slicing = false;
-                    end();
+            if ((currentAnim === sprite.slice.right || currentAnim === sprite.slice.left) && (heroAnimation.currentSprite === sprite.slice.right || heroAnimation.currentSprite === sprite.slice.left) // prevents slicing from resetting when turning
+            || (currentAnim === heroAnimation.currentSprite)) { // checks if animation changed
+                heroAnimation.frames++; // moves on to next frame
+                if (heroAnimation.frames >= heroAnimation.maxFrames) {
+                    if (currentAnim === sprite.slice.left || currentAnim === sprite.slice.right) { // If slice animation ends
+                        hero.slicing = false;
+                        setTimeout(() => { moveKeys.slice.pressed = false;}, 800) // sets up the cooldown for slicing
+                    } else {
+                        heroAnimation.frames = 0; // loops all animation apart from slice
+                    }
                 }
-                hero.anim.frames %= hero.anim.maxFrames; // resets animation after all frames ends
             } else {
+                heroAnimation.frames = 0;
                 end();
             }
-        }, hero.anim.speed);
+        }, heroAnimation.speed);
     }
     frameInterval();
 
@@ -60,6 +66,7 @@ window.onload = () => {
         platforms.forEach((platform) => {
             platform.draw();
         });
+        heroAnimation.drawAnimation(hero.position.x, hero.position.y);
         hero.update();
 
         // inputs
@@ -67,54 +74,60 @@ window.onload = () => {
             // idle
             hero.velocity.x = 0;
             // sets hero animation to idle depending on which direction
-            hero.anim.speed = 60;
-            hero.anim.maxFrames = 18;
-            hero.anim.cropy = 27;
-            hero.anim.width = 23;
-            hero.anim.height = 32;
-            if (hero.anim.direction === 'right') { // which direction the hero is facing
-                hero.anim.frameSkip = 80;
-                hero.anim.cropx = 18;
-                hero.anim.currentSprite = sprite.idle.right;
+            heroAnimation.speed = 60;
+            heroAnimation.maxFrames = 18;
+            heroAnimation.cropy = 27;
+            heroAnimation.width = 23;
+            heroAnimation.height = 32;
+            if (heroAnimation.direction === 'right') { // which direction the hero is facing
+                heroAnimation.frameSkip = 80;
+                heroAnimation.cropx = 18;
+                heroAnimation.currentSprite = sprite.idle.right;
             } else {
-                hero.anim.frameSkip = -80;
-                hero.anim.cropx = 1398;
-                hero.anim.currentSprite = sprite.idle.left;
+                heroAnimation.frameSkip = -80;
+                heroAnimation.cropx = 1398;
+                heroAnimation.currentSprite = sprite.idle.left;
             }
         } else { // when left or right key is pressed
             // moving
-            hero.anim.speed = 25;
-            hero.anim.maxFrames = 24;
-            hero.anim.cropy = 22;
-            hero.anim.width = 25;
-            hero.anim.height = 37;
+            heroAnimation.speed = 25;
+            heroAnimation.maxFrames = 24;
+            heroAnimation.cropy = 22;
+            heroAnimation.width = 25;
+            heroAnimation.height = 37;
             if (moveKeys.right.pressed) { // when right key is pressed
                 hero.velocity.x = hero.speed;
                 // sets hero animation to run
-                hero.anim.frameSkip = 80;
-                hero.anim.direction = 'right';
-                hero.anim.cropx = 18;
-                hero.anim.currentSprite = sprite.run.right;
+                heroAnimation.frameSkip = 80;
+                heroAnimation.direction = 'right';
+                heroAnimation.cropx = 18;
+                heroAnimation.currentSprite = sprite.run.right;
             } else { // when left key is pressed
                 hero.velocity.x = -hero.speed;
                 // sets hero animation to run
-                hero.anim.frameSkip = -80;
-                hero.anim.direction = 'left';
-                hero.anim.cropx = 1878;
-                hero.anim.currentSprite = sprite.run.left;
+                heroAnimation.frameSkip = -80;
+                heroAnimation.direction = 'left';
+                heroAnimation.cropx = 1878;
+                heroAnimation.currentSprite = sprite.run.left;
             }
 
         }
         // slicing - overrides current animation
-        if(hero.slicing) {
-            hero.anim.frameSkip = 110;
-            hero.anim.speed = 40;
-            hero.anim.maxFrames = 7;
-            hero.anim.cropx = 26;
-            hero.anim.cropy = 37;
-            hero.anim.width = 55;
-            hero.anim.height = 37;
-            hero.anim.currentSprite = sprite.slice.right;
+        if (hero.slicing) {
+            heroAnimation.speed = 50;
+            heroAnimation.maxFrames = 6;
+            heroAnimation.cropy = 37;
+            heroAnimation.width = 55;
+            heroAnimation.height = 37;
+            if (heroAnimation.direction === 'right') { // slice right
+                heroAnimation.cropx = 600;
+                heroAnimation.currentSprite = sprite.slice.right;
+                heroAnimation.frameSkip = -110;
+            } else { // slice left
+                heroAnimation.cropx = 26;
+                heroAnimation.currentSprite = sprite.slice.left;
+                heroAnimation.frameSkip = 110;
+            }
         }
         //jumping
         if (moveKeys.up.pressed && // up key pressed
@@ -148,14 +161,13 @@ window.onload = () => {
         switch (code) {
             case "KeyW":
             case "Space":
-                // hero.velocity.y -= 8; // moved jumping inside animate() function
                 moveKeys.up.pressed = true;
                 break;
             case "KeyS":
                 if (!moveKeys.slice.pressed) { // if the player already sliced this won't activate
                     hero.slicing = true;
+                    heroAnimation.frames = 0; // resets frames before it draws slashing
                     moveKeys.slice.pressed = true;
-                    setTimeout(() => { moveKeys.slice.pressed = false; }, 1000) // sets up the cooldown for slicing
                 }
                 break;
             case "KeyA":
