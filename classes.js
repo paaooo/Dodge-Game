@@ -52,25 +52,12 @@ class Hero {
             x: 0,
             y: 0
         }
-        this.speed = 4;
+        this.speed = 4.5;
         this.jumpHeight = 12;
         this.width = 46;
         this.height = 64;
 
         this.slicing = false; // this decides if the player is slicing or not
-
-        this.anim = { // these are all the variables used for sprite animation
-            frameSkip: 80,
-            direction: 'right',
-            speed: 60,
-            frames: 0,
-            maxFrames: 17,
-            cropx: 18,
-            cropy: 27,
-            width: 23,
-            height: 32,
-            currentSprite: sprite.idle.right
-        }
     }
     update() {
         // testing hitbox with animation
@@ -88,7 +75,7 @@ class Hero {
 }
 class HeroAnimation { // so the actual animation doesn't change the hitbox of the character
     constructor() {
-        this.xOffset = 2; // to center the character in the middle of the hitox
+        this.xOffset = 3; // to center the character in the middle of the hitox
         this.animX = 1000;
         this.animY = 600;
         this.frameSkip = 80;
