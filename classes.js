@@ -52,7 +52,7 @@ class Hero {
             x: 0,
             y: 0
         }
-        this.speed = 4.5;
+        this.speed = 4;
         this.jumpHeight = 12;
         this.width = 46;
         this.height = 64;
@@ -73,6 +73,11 @@ class Hero {
         }
     }
     update() {
+        // testing hitbox with animation
+        // c.globalAlpha = 0.5;
+        // c.fillRect(this.position.x, this.position.y, this.width, this.height);
+        // c.globalAlpha = 1;
+
         // movement
         this.position.x += this.velocity.x;
         // gravity & jumping
@@ -83,22 +88,24 @@ class Hero {
 }
 class HeroAnimation { // so the actual animation doesn't change the hitbox of the character
     constructor() {
+        this.xOffset = 2; // to center the character in the middle of the hitox
         this.animX = 1000;
         this.animY = 600;
         this.frameSkip = 80;
         this.direction = 'right';
         this.speed = 60;
         this.frames = 0;
-        this.maxFrames = 17;
-        this.cropx = 18;
+        this.maxFrames = 18;
+        this.cropx = 17;
         this.cropy = 27;
-        this.width = 23;
+        this.width = 24;
         this.height = 32;
         this.currentSprite = sprite.idle.right;
     }
     drawAnimation(x, y) {
-        this.animX = x - (this.width - 23);
+        this.animX = x - (this.width - 23) + this.xOffset;
         this.animY = y - ((this.height - 32) * 2);
+        // c.fillRect(this.animX, this.animY, this.width*2, this.height*2); // testing animation space
         c.drawImage(
             this.currentSprite,
             this.cropx + (this.frames * this.frameSkip), // crop position x

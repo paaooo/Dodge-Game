@@ -7,10 +7,13 @@ window.onload = () => {
         new Platform(512, 530, terrain.platform1),
         new Platform(545, 290, terrain.platform2),
         new Platform(175, 405, terrain.platform3),
-        new Platform(1035, 405, terrain.platform3),
-        new Platform(0, 700, terrain.ground),
-        new Platform(-67, 0, terrain.wall.left),
-        new Platform(1336, 0, terrain.wall.right)]; // creates platforms, walls, and the ground
+        new Platform(1035, 405, terrain.platform3)]; // creates platforms
+
+    const ground = new Platform(0, 700, terrain.ground); // creates ground
+    const walls = { // creates walls
+        left: new Platform(-67, 0, terrain.wall.left),
+        right: new Platform(1336, 0, terrain.wall.right)
+    }
     const background = new Background(terrain.background); // creates background
     const sky = new Background(terrain.sky); // creates sky / background for background
 
@@ -63,9 +66,13 @@ window.onload = () => {
         // draws: background first, then platforms, then character
         sky.draw();
         background.draw();
+        // Note: separated platforms, walls, and ground for projectile purposes, and to box character in
         platforms.forEach((platform) => {
             platform.draw();
         });
+        ground.draw();
+        walls.left.draw();
+        walls.right.draw();
         heroAnimation.drawAnimation(hero.position.x, hero.position.y);
         hero.update();
 
@@ -77,27 +84,30 @@ window.onload = () => {
             heroAnimation.speed = 60;
             heroAnimation.maxFrames = 18;
             heroAnimation.cropy = 27;
-            heroAnimation.width = 23;
+            heroAnimation.width = 24;
             heroAnimation.height = 32;
             if (heroAnimation.direction === 'right') { // which direction the hero is facing
+                heroAnimation.xOffset = 3;
                 heroAnimation.frameSkip = 80;
-                heroAnimation.cropx = 18;
+                heroAnimation.cropx = 17;
                 heroAnimation.currentSprite = sprite.idle.right;
             } else {
+                heroAnimation.xOffset = -3;
                 heroAnimation.frameSkip = -80;
-                heroAnimation.cropx = 1398;
+                heroAnimation.cropx = 1399;
                 heroAnimation.currentSprite = sprite.idle.left;
             }
         } else { // when left or right key is pressed
             // moving
-            heroAnimation.speed = 25;
+            heroAnimation.speed = 30;
             heroAnimation.maxFrames = 24;
             heroAnimation.cropy = 22;
-            heroAnimation.width = 25;
+            heroAnimation.width = 26;
             heroAnimation.height = 37;
             if (moveKeys.right.pressed) { // when right key is pressed
                 hero.velocity.x = hero.speed;
                 // sets hero animation to run
+                heroAnimation.xOffset = 7;
                 heroAnimation.frameSkip = 80;
                 heroAnimation.direction = 'right';
                 heroAnimation.cropx = 18;
@@ -105,6 +115,7 @@ window.onload = () => {
             } else { // when left key is pressed
                 hero.velocity.x = -hero.speed;
                 // sets hero animation to run
+                heroAnimation.xOffset = -7;
                 heroAnimation.frameSkip = -80;
                 heroAnimation.direction = 'left';
                 heroAnimation.cropx = 1878;
@@ -114,19 +125,21 @@ window.onload = () => {
         }
         // slicing - overrides current animation
         if (hero.slicing) {
-            heroAnimation.speed = 50;
+            heroAnimation.speed = 60;
             heroAnimation.maxFrames = 6;
             heroAnimation.cropy = 37;
-            heroAnimation.width = 55;
+            heroAnimation.width = 58;
             heroAnimation.height = 37;
             if (heroAnimation.direction === 'right') { // slice right
-                heroAnimation.cropx = 600;
+                heroAnimation.xOffset = 19;
+                heroAnimation.cropx = 601;
                 heroAnimation.currentSprite = sprite.slice.right;
-                heroAnimation.frameSkip = -110;
+                heroAnimation.frameSkip = -112;
             } else { // slice left
-                heroAnimation.cropx = 26;
+                heroAnimation.xOffset = -19;
+                heroAnimation.cropx = 22;
                 heroAnimation.currentSprite = sprite.slice.left;
-                heroAnimation.frameSkip = 110;
+                heroAnimation.frameSkip = 112;
             }
         }
         //jumping
@@ -147,11 +160,19 @@ window.onload = () => {
                 }
             }
             // Collision horizontally
-            if ((hero.position.x + hero.width + hero.velocity.x >= platform.position.x && hero.position.x + hero.velocity.x <= platform.position.x + platform.width)
-                && (hero.position.y + hero.height >= platform.position.y && hero.position.y <= platform.position.y + platform.height)) {
+            if ((hero.position.x + hero.width + hero.velocity.x >= platform.position.x && hero.position.x + hero.velocity.x <= platform.position.x + platform.width) // detects if character is beside platform
+                && (hero.position.y + hero.height >= platform.position.y && hero.position.y <= platform.position.y + platform.height)) { // detects if character is in line with platform height
                 hero.velocity.x = 0;
             }
         });
+        // Collision between character and ground
+        if (hero.position.y + hero.height <= ground.position.y && hero.position.y + hero.height + hero.velocity.y >= ground.position.y) {
+            hero.velocity.y = 0;
+        }
+        // Collision between character and walls
+        if (hero.position.x + hero.width + hero.velocity.x >= walls.right.position.x || hero.position.x + hero.velocity.x <= walls.left.position.x + walls.left.width) {
+            hero.velocity.x = 0;
+        }
     }
 
     animate();
