@@ -17,33 +17,13 @@ window.onload = () => {
     const background = new Background(terrain.background); // creates background
     const sky = new Background(terrain.sky); // creates sky / background for background
 
-    function frameInterval() { // Frames for image animations
-        var currentAnim = heroAnimation.currentSprite;
-        var end = () => {
-            // resets the animation interval when animation changes
-            clearInterval(anim);
-            frameInterval();
-        }
-        
-        let anim = setInterval(() => {
-            if ((currentAnim === sprite.slice.right || currentAnim === sprite.slice.left) && (heroAnimation.currentSprite === sprite.slice.right || heroAnimation.currentSprite === sprite.slice.left) // prevents slicing from resetting when turning
-            || (currentAnim === heroAnimation.currentSprite)) { // checks if animation changed
-                heroAnimation.frames++; // moves on to next frame
-                if (heroAnimation.frames >= heroAnimation.maxFrames) {
-                    if (currentAnim === sprite.slice.left || currentAnim === sprite.slice.right) { // If slice animation ends
-                        hero.slicing = false;
-                        setTimeout(() => { moveKeys.slice.pressed = false;}, 800) // sets up the cooldown for slicing
-                    } else {
-                        heroAnimation.frames = 0; // loops all animation apart from slice
-                    }
-                }
-            } else {
-                heroAnimation.frames = 0;
-                end();
-            }
-        }, heroAnimation.speed);
-    }
-    frameInterval();
+    const projectiles = [
+        new Projectile(shuriken),
+        new Projectile(shuriken),
+        new Projectile(shuriken),
+        new Projectile(shuriken),
+        new Projectile(shuriken)
+    ]
 
     var moveKeys = {
         left: {
@@ -60,8 +40,88 @@ window.onload = () => {
         }
     }
 
-    function animate() { // Game loop
-        requestAnimationFrame(animate);
+    // Frames for image animations
+    function frameInterval() {
+        let currentAnim = heroAnimation.currentSprite;
+        let end = () => {
+            // resets the animation interval when animation changes
+            clearInterval(anim);
+            frameInterval();
+        }
+
+        let anim = setInterval(() => {
+            if ((currentAnim === sprite.slice.right || currentAnim === sprite.slice.left) && (heroAnimation.currentSprite === sprite.slice.right || heroAnimation.currentSprite === sprite.slice.left) // prevents slicing from resetting when turning
+                || (currentAnim === heroAnimation.currentSprite)) { // checks if animation changed
+                heroAnimation.frames++; // moves on to next frame
+                if (heroAnimation.frames >= heroAnimation.maxFrames) {
+                    if (currentAnim === sprite.slice.left || currentAnim === sprite.slice.right) { // If slice animation ends
+                        hero.slicing = false;
+                        setTimeout(() => { moveKeys.slice.pressed = false; }, 500) // sets up the cooldown for slicing
+                    } else {
+                        heroAnimation.frames = 0; // loops all animation apart from slice
+                    }
+                }
+            } else {
+                heroAnimation.frames = 0;
+                end();
+            }
+        }, heroAnimation.speed);
+    }
+    frameInterval();
+
+    // for projectiles to rotate
+    setInterval(() => {
+        projectiles.forEach((projectile) => {
+            projectile.frames++;
+            projectile.frames %= 6; // for it to reset after 6 frames
+        })
+    }, 25);
+
+    var scoreInterval = null; // for score to go up
+    function startGame() {
+        // resets everthing
+        score = 0;
+        loseGame();
+        lost = false;
+        // launches projectiles at a random direction
+        projectiles.forEach((projectile) => {
+            projectile.velocity.x = Math.ceil(Math.random() * 3) - 2 + Math.random();
+            // projectile.velocity.x = 1;
+            projectile.velocity.y = Math.ceil(Math.random() * 3) - 2 + Math.random();
+            // if projectile is too slow
+            if (Math.abs(projectile.velocity.x) + Math.abs(projectile.velocity.y) <= 2) {
+                if (projectile.velocity.x > 0) {
+                    projectile.velocity.x += 1;
+                } else {
+                    projectile.velocity.x -= 1;
+                }
+                if (projectile.velocity.y > 0) {
+                    projectile.velocity.y += 1;
+                } else {
+                    projectile.velocity.y -= 1;
+                }
+            }
+        });
+        // starts counting the score up
+        scoreInterval = setInterval(() => { score++ }, 1000);
+    }
+
+    function loseGame() {
+        // turns off projectiles
+        lost = true;
+        projectiles.forEach((projectile) => {
+            projectile.velocity.x = 0;
+            projectile.velocity.y = 0;
+            projectile.position.x = canvas.width / 2;
+            projectile.position.y = 100;
+        });
+        // stops score from going up
+        clearInterval(scoreInterval);
+    }
+
+    function gameLoop() { // Game loop
+        requestAnimationFrame(gameLoop);
+        // console.log(score);
         c.clearRect(0, 0, canvas.width, canvas.height); // clears everythign in the canvas for the next frame to be drawn / updated
         // draws: background first, then platforms, then character
         sky.draw();
@@ -70,11 +130,17 @@ window.onload = () => {
         platforms.forEach((platform) => {
             platform.draw();
         });
+
         ground.draw();
         walls.left.draw();
         walls.right.draw();
+
         heroAnimation.drawAnimation(hero.position.x, hero.position.y);
         hero.update();
+
+        projectiles.forEach((projectile) => {
+            projectile.update();
+        });
 
         // inputs
         if ((moveKeys.left.pressed && moveKeys.right.pressed) || (!moveKeys.left.pressed && !moveKeys.right.pressed)) { // for when both keys are pressed or none
@@ -165,26 +231,75 @@ window.onload = () => {
                 hero.velocity.x = 0;
             }
         });
+
         // Collision between character and ground
-        if (hero.position.y + hero.height <= ground.position.y && hero.position.y + hero.height + hero.velocity.y >= ground.position.y) {
+        if (hero.position.y + hero.height + hero.velocity.y >= ground.position.y) {
             hero.velocity.y = 0;
         }
+
         // Collision between character and walls
         if (hero.position.x + hero.width + hero.velocity.x >= walls.right.position.x || hero.position.x + hero.velocity.x <= walls.left.position.x + walls.left.width) {
             hero.velocity.x = 0;
         }
+
+        // Projectile Collisions
+        projectiles.forEach((projectile) => {
+            // Note: Collision with environment increases velocity
+
+            // Collision between projectile and ground and top
+            if (projectile.position.y + projectile.height + projectile.velocity.y >= ground.position.y || projectile.position.y + projectile.velocity.y <= 0) {
+                projectile.velocity.y *= -1;
+                if (projectile.velocity.y < 0) {
+                    projectile.velocity.y -= gravity / 5;
+                } else {
+                    projectile.velocity.y += gravity / 5;
+                }
+            }
+            // Collision between projectile and walls
+            if (projectile.position.x + projectile.width + projectile.velocity.x >= walls.right.position.x || projectile.position.x + projectile.velocity.x <= walls.left.position.x + walls.left.width) {
+                projectile.velocity.x *= -1;
+                if(projectile.velocity.x < 0) {
+                    projectile.velocity.x -= gravity / 3;
+                } else {
+                    projectile.velocity.x += gravity / 3;
+                }
+            }
+
+            // Projectile max velocity
+            if (Math.abs(projectile.velocity.y) > 10) {
+                if(projectile.velocity.y > 0) {
+                    projectile.velocity.y = 10;
+                } else {
+                    projectile.velocity.y = -10;
+                }
+            }
+            if (Math.abs(projectile.velocity.x) > 10) {
+                if(projectile.velocity.x > 0) {
+                    projectile.velocity.x = 10;
+                } else {
+                    projectile.velocity.x = -10;
+                }
+            }
+
+            // Collision between projectile and player
+            // if (hero.slicing) { // during slicing animation
+            //     if(projectile.position.y + projectile.velocity.y + projectile.)
+            // }
+        });
     }
 
-    animate();
+    gameLoop();
 
     //inputs
-    addEventListener("keydown", ({ code }) => {
-        switch (code) {
+    addEventListener("keydown", (key) => {
+        key.preventDefault();
+        switch (key.code) {
             case "KeyW":
             case "Space":
                 moveKeys.up.pressed = true;
                 break;
             case "KeyS":
+            case "KeyJ":
                 if (!moveKeys.slice.pressed) { // if the player already sliced this won't activate
                     hero.slicing = true;
                     heroAnimation.frames = 0; // resets frames before it draws slashing
@@ -213,4 +328,6 @@ window.onload = () => {
                 break;
         }
     })
+
+    document.getElementsByTagName("Start")[0].addEventListener("click", () => { startGame(); });
 }

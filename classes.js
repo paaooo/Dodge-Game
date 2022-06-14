@@ -6,6 +6,9 @@ var c = canvas.getContext('2d');
 canvas.width = 1366;
 canvas.height = 786;
 
+var lost = true;
+var score = 0;
+
 var gravity = .35;
 
 function makeImage(path) {
@@ -26,6 +29,7 @@ var terrain = {
         right: makeImage('images/rightwall.png')
     }
 }
+
 var sprite = {
     idle: {
         right: makeImage('images/idle-right.png'),
@@ -40,6 +44,8 @@ var sprite = {
         right: makeImage('images/slice-right.png')
     }
 }
+
+var shuriken = makeImage('images/shurikenRotate2.png');
 
 class Hero {
     // learned that you don't have to initialize variables in js
@@ -129,5 +135,48 @@ class Background {
     }
     draw() {
         c.drawImage(this.image, 0, 0);
+    }
+}
+
+class Projectile {
+    constructor(image) {
+        this.position = {
+            x: canvas.width / 2,
+            y: 100
+        }
+        this.velocity = {
+            x: 0,
+            y: 0
+        }
+        this.image = image;
+        this.width = 35;
+        this.height = 35;
+        this.frames = 0;
+    }
+    draw(transparency) {
+        c.globalAlpha = transparency; // to make projectiles invisible when the game has not started
+        // c.fillRect(this.position.x, this.position.y, this.width, this.height);
+        c.drawImage(
+            this.image,
+            230 * this.frames,
+            0,
+            230,
+            230,
+            this.position.x,
+            this.position.y,
+            this.width,
+            this.height
+        );
+        c.globalAlpha = 1;
+    }
+    update() {
+        if (lost) {
+            this.draw(.2);
+        } else {
+            this.draw(1);
+        }
+
+        this.position.x += this.velocity.x;
+        this.position.y += this.velocity.y;
     }
 }
