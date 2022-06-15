@@ -268,8 +268,8 @@ window.onload = () => {
 
             // Collision between projectile and player
             if (hero.slicing) { // during slicing animation
-                if (projectile.position.y + projectile.velocity.y + projectile.height >= heroAnimation.animY && projectile.position.y + projectile.velocity.y <= heroAnimation.animY + heroAnimation.height // If projectile is aligned with hitbox vertically 
-                    && projectile.position.x + projectile.velocity.x + projectile.width >= heroAnimation.animX && projectile.position.x + projectile.velocity.x <= heroAnimation.animX + (heroAnimation.width * 2) // If projectile is aligned with hitbox horizontally
+                if (projectile.position.y + projectile.height >= heroAnimation.animY && projectile.position.y <= heroAnimation.animY + heroAnimation.height // If projectile is aligned with hitbox vertically 
+                    && projectile.position.x + projectile.width >= heroAnimation.animX && projectile.position.x <= heroAnimation.animX + (heroAnimation.width * 2) // If projectile is aligned with hitbox horizontally
                     && !projectile.sliced) { // If projectile hasn't been sliced yet
                     if (heroAnimation.direction === "right") {
                         projectile.position.x = heroAnimation.animX + (heroAnimation.width*2);
