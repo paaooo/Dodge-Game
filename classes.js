@@ -26,11 +26,11 @@ var sound = {
 }
 
 var terrain = {
-    platform1: makeImage('/images/platform1.png'),
-    platform2: makeImage('/images/platform2.png'),
-    platform3: makeImage('/images/platform3.png'),
-    background: makeImage('/images/background.png'),
-    sky: makeImage('/images/backgroundsky.png'),
+    platform1: makeImage('images/platform1.png'),
+    platform2: makeImage('images/platform2.png'),
+    platform3: makeImage('images/platform3.png'),
+    background: makeImage('images/background.png'),
+    sky: makeImage('images/backgroundsky.png'),
     ground: makeImage('images/floor.png'),
     wall: {
         left: makeImage('images/leftwall.png'),
@@ -59,8 +59,8 @@ class Hero {
     // learned that you don't have to initialize variables in js
     constructor() {
         this.position = {
-            x: 1000,
-            y: 600
+            x: canvas.width / 2,
+            y: 620
         }
         this.velocity = {
             x: 0,
@@ -74,11 +74,6 @@ class Hero {
         this.slicing = false; // this decides if the player is slicing or not
     }
     update() {
-        // testing hitbox with animation
-        // c.globalAlpha = 0.5;
-        // c.fillRect(this.position.x, this.position.y, this.width, this.height);
-        // c.globalAlpha = 1;
-
         // movement
         this.position.x += this.velocity.x;
         // gravity & jumping
@@ -106,7 +101,6 @@ class HeroAnimation { // separated so the actual animation doesn't change the hi
     drawAnimation(x, y) {
         this.animX = x - (this.width - 23) + this.xOffset;
         this.animY = y - ((this.height - 32) * 2);
-        // c.fillRect(this.animX, this.animY, this.width*2, this.height*2); // testing animation hitbox
         c.drawImage(
             this.currentSprite,
             this.cropx + (this.frames * this.frameSkip), // crop position x
@@ -164,7 +158,6 @@ class Projectile {
     }
     draw(transparency) {
         c.globalAlpha = transparency; // to make projectiles invisible when the game has not started
-        // c.fillRect(this.position.x, this.position.y, this.width, this.height);
         c.drawImage(
             this.image,
             230 * this.frames,

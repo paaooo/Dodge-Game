@@ -17,7 +17,7 @@ window.onload = () => {
     const background = new Background(terrain.background); // creates background
     const sky = new Background(terrain.sky); // creates sky / background for background
 
-    const projectiles = [
+    const projectiles = [ // Contains amount of projectiles
         new Projectile(shuriken),
         new Projectile(shuriken),
         new Projectile(shuriken),
@@ -28,7 +28,7 @@ window.onload = () => {
         new Projectile(shuriken)
     ]
 
-    var moveKeys = {
+    var moveKeys = { // So Inputs are able to be held down
         left: {
             pressed: false
         },
@@ -70,7 +70,6 @@ window.onload = () => {
             }
         }, heroAnimation.speed);
     }
-    frameInterval();
 
     // for projectiles to rotate
     setInterval(() => {
@@ -82,15 +81,14 @@ window.onload = () => {
 
     var scoreInterval = null; // for score to go up
     function startGame() {
-        // resets everthing
+        // resets everything
         score = 0;
         loseGame();
         lost = false;
         // launches projectiles at a random direction
         projectiles.forEach((projectile) => {
-            projectile.velocity.x = Math.ceil(Math.random() * 3) - 2 + Math.random();
-            // projectile.velocity.x = 1;
-            projectile.velocity.y = Math.ceil(Math.random() * 3) - 2 + Math.random();
+            projectile.velocity.x = Math.ceil(Math.random() * 3) - 2.5 + Math.random();
+            projectile.velocity.y = Math.ceil(Math.random() * 3) - 2.5 + Math.random();
             // if projectile is too slow
             if (Math.abs(projectile.velocity.x) + Math.abs(projectile.velocity.y) <= 2) {
                 if (projectile.velocity.x > 0) {
@@ -124,7 +122,6 @@ window.onload = () => {
 
     function gameLoop() { // Game loop
         requestAnimationFrame(gameLoop);
-        // console.log(score);
         c.clearRect(0, 0, canvas.width, canvas.height); // clears everythign in the canvas for the next frame to be drawn / updated
         // draws: background first, then platforms, then character, then projectile
         sky.draw();
@@ -272,7 +269,7 @@ window.onload = () => {
             // Collision between projectile and player
             if (hero.slicing) { // during slicing animation
                 if (projectile.position.y + projectile.velocity.y + projectile.height >= heroAnimation.animY && projectile.position.y + projectile.velocity.y <= heroAnimation.animY + heroAnimation.height // If projectile is aligned with hitbox vertically 
-                    && projectile.position.x + projectile.velocity.x + projectile.width >= heroAnimation.animX && projectile.position.x + projectile.velocity.x <= heroAnimation.animX + heroAnimation.width // If projectile is aligned with hitbox horizontally
+                    && projectile.position.x + projectile.velocity.x + projectile.width >= heroAnimation.animX && projectile.position.x + projectile.velocity.x <= heroAnimation.animX + (heroAnimation.width * 2) // If projectile is aligned with hitbox horizontally
                     && !projectile.sliced) { // If projectile hasn't been sliced yet
                     if (heroAnimation.direction === "right") {
                         projectile.position.x = heroAnimation.animX + (heroAnimation.width*2);
@@ -282,7 +279,8 @@ window.onload = () => {
                         projectile.velocity.x = (Math.abs(projectile.velocity.x) * -1) - .5;
                     }
                     projectile.sliced = true;
-                    sound.hit.play();
+                    if(!lost) {sound.hit.play();} // condition is so that sound doesn't play on invisible projectiles
+
                 }
             } else {
                 if(projectile.position.y + projectile.velocity.y + projectile.height >= hero.position.y && projectile.position.y + projectile.velocity.y <= hero.position.y + hero.height // If projectile is aligned with hitbox vertically
@@ -321,8 +319,6 @@ window.onload = () => {
         document.getElementsByTagName("Score")[0].innerText = "Score: " + score;
     }
 
-    gameLoop();
-
     //inputs
     addEventListener("keydown", (key) => {
         key.preventDefault();
@@ -349,6 +345,9 @@ window.onload = () => {
             case "KeyD":
                 moveKeys.right.pressed = true;
                 break;
+            case "Enter":
+                startGame();
+                break;
         }
     })
     addEventListener("keyup", ({ code }) => {
@@ -367,4 +366,6 @@ window.onload = () => {
     })
 
     document.getElementsByTagName("Start")[0].addEventListener("click", () => { startGame(); });
+    frameInterval();
+    gameLoop();
 }
