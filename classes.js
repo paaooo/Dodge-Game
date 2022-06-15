@@ -17,6 +17,14 @@ function makeImage(path) {
     return image;
 }
 
+var sound = {
+    tick: new Howl({ src: ['sounds/tick.mp3'], volume: 1}),
+    lose: new Howl({ src: ['sounds/lose.mp3'], volume: 0.2}),
+    jump: new Howl({ src: ['sounds/jump.mp3'], volume: 0.03}),
+    swing: new Howl({ src: ['sounds/swing.mp3'], volume: 0.1}),
+    hit: new Howl({ src: ['sounds/hit.mp3'], volume: 0.05})
+}
+
 var terrain = {
     platform1: makeImage('/images/platform1.png'),
     platform2: makeImage('/images/platform2.png'),
@@ -45,7 +53,7 @@ var sprite = {
     }
 }
 
-var shuriken = makeImage('images/shurikenRotate2.png');
+var shuriken = makeImage('images/shurikenRotate.png');
 
 class Hero {
     // learned that you don't have to initialize variables in js
@@ -79,7 +87,7 @@ class Hero {
 
     }
 }
-class HeroAnimation { // so the actual animation doesn't change the hitbox of the character
+class HeroAnimation { // separated so the actual animation doesn't change the hitbox of the character
     constructor() {
         this.xOffset = 3; // to center the character in the middle of the hitox
         this.animX = 1000;
@@ -98,7 +106,7 @@ class HeroAnimation { // so the actual animation doesn't change the hitbox of th
     drawAnimation(x, y) {
         this.animX = x - (this.width - 23) + this.xOffset;
         this.animY = y - ((this.height - 32) * 2);
-        // c.fillRect(this.animX, this.animY, this.width*2, this.height*2); // testing animation space
+        // c.fillRect(this.animX, this.animY, this.width*2, this.height*2); // testing animation hitbox
         c.drawImage(
             this.currentSprite,
             this.cropx + (this.frames * this.frameSkip), // crop position x
@@ -152,6 +160,7 @@ class Projectile {
         this.width = 35;
         this.height = 35;
         this.frames = 0;
+        this.sliced = false; // for projectiles to only be sliced once per swing
     }
     draw(transparency) {
         c.globalAlpha = transparency; // to make projectiles invisible when the game has not started
@@ -171,7 +180,7 @@ class Projectile {
     }
     update() {
         if (lost) {
-            this.draw(.2);
+            this.draw(0);
         } else {
             this.draw(1);
         }

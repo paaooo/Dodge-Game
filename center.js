@@ -11,5 +11,6 @@ function centerElement(element) {
 
 centerElement("canvas");
 centerElement("Start");
+centerElement("Score");
 
-window.onresize = () => { centerElement("canvas"); centerElement("Start"); }
+window.onresize = () => { centerElement("canvas"); centerElement("Start"); centerElement("Score");}

@@ -22,6 +22,9 @@ window.onload = () => {
         new Projectile(shuriken),
         new Projectile(shuriken),
         new Projectile(shuriken),
+        new Projectile(shuriken),
+        new Projectile(shuriken),
+        new Projectile(shuriken),
         new Projectile(shuriken)
     ]
 
@@ -103,7 +106,7 @@ window.onload = () => {
             }
         });
         // starts counting the score up
-        scoreInterval = setInterval(() => { score++ }, 1000);
+        scoreInterval = setInterval(() => { score++; sound.tick.play(); }, 1000);
     }
 
     function loseGame() {
@@ -123,7 +126,7 @@ window.onload = () => {
         requestAnimationFrame(gameLoop);
         // console.log(score);
         c.clearRect(0, 0, canvas.width, canvas.height); // clears everythign in the canvas for the next frame to be drawn / updated
-        // draws: background first, then platforms, then character
+        // draws: background first, then platforms, then character, then projectile
         sky.draw();
         background.draw();
         // Note: separated platforms, walls, and ground for projectile purposes, and to box character in
@@ -211,6 +214,7 @@ window.onload = () => {
         //jumping
         if (moveKeys.up.pressed && // up key pressed
             (hero.velocity.y === gravity)) { // if the velocity is 0 (bottom) or equals to gravity (on a platform but doesn't move)
+                sound.jump.play();
             hero.velocity.y -= hero.jumpHeight;
         }
 
@@ -258,34 +262,63 @@ window.onload = () => {
             // Collision between projectile and walls
             if (projectile.position.x + projectile.width + projectile.velocity.x >= walls.right.position.x || projectile.position.x + projectile.velocity.x <= walls.left.position.x + walls.left.width) {
                 projectile.velocity.x *= -1;
-                if(projectile.velocity.x < 0) {
+                if (projectile.velocity.x < 0) {
                     projectile.velocity.x -= gravity / 3;
                 } else {
                     projectile.velocity.x += gravity / 3;
                 }
             }
 
+            // Collision between projectile and player
+            if (hero.slicing) { // during slicing animation
+                if (projectile.position.y + projectile.velocity.y + projectile.height >= heroAnimation.animY && projectile.position.y + projectile.velocity.y <= heroAnimation.animY + heroAnimation.height // If projectile is aligned with hitbox vertically 
+                    && projectile.position.x + projectile.velocity.x + projectile.width >= heroAnimation.animX && projectile.position.x + projectile.velocity.x <= heroAnimation.animX + heroAnimation.width // If projectile is aligned with hitbox horizontally
+                    && !projectile.sliced) { // If projectile hasn't been sliced yet
+                    if (heroAnimation.direction === "right") {
+                        projectile.position.x = heroAnimation.animX + (heroAnimation.width*2);
+                        projectile.velocity.x = Math.abs(projectile.velocity.x) + .5;
+                    } else {
+                        projectile.position.x = heroAnimation.animX - projectile.width;
+                        projectile.velocity.x = (Math.abs(projectile.velocity.x) * -1) - .5;
+                    }
+                    projectile.sliced = true;
+                    sound.hit.play();
+                }
+            } else {
+                if(projectile.position.y + projectile.velocity.y + projectile.height >= hero.position.y && projectile.position.y + projectile.velocity.y <= hero.position.y + hero.height // If projectile is aligned with hitbox vertically
+                    && projectile.position.x + projectile.velocity.x + projectile.width >= hero.position.x && projectile.position.x + projectile.velocity.x <= hero.position.x + hero.width) { // If projectile is aligned with hitbox horizontally
+                        if(!lost) {sound.lose.play();} // condition is so that sound doesn't play on invisible projectiles
+                        loseGame();
+                    }
+            }
+
+            // Fixes interaction where player could put projectiles out of bounds if hit a certain way
+            if(projectile.position.x < walls.left.position.x + walls.left.width) {
+                projectile.position.x = walls.left.position.x + walls.left.width + .1;
+            }
+            if(projectile.position.x + projectile.width > walls.right.position.x) {
+                projectile.position.x = walls.right.position.x - projectile.width - .1;
+            }
+
             // Projectile max velocity
             if (Math.abs(projectile.velocity.y) > 10) {
-                if(projectile.velocity.y > 0) {
+                if (projectile.velocity.y > 0) {
                     projectile.velocity.y = 10;
                 } else {
                     projectile.velocity.y = -10;
                 }
             }
             if (Math.abs(projectile.velocity.x) > 10) {
-                if(projectile.velocity.x > 0) {
+                if (projectile.velocity.x > 0) {
                     projectile.velocity.x = 10;
                 } else {
                     projectile.velocity.x = -10;
                 }
             }
-
-            // Collision between projectile and player
-            // if (hero.slicing) { // during slicing animation
-            //     if(projectile.position.y + projectile.velocity.y + projectile.)
-            // }
         });
+
+        // Update Score
+        document.getElementsByTagName("Score")[0].innerText = "Score: " + score;
     }
 
     gameLoop();
@@ -301,9 +334,13 @@ window.onload = () => {
             case "KeyS":
             case "KeyJ":
                 if (!moveKeys.slice.pressed) { // if the player already sliced this won't activate
+                    sound.swing.play();
                     hero.slicing = true;
                     heroAnimation.frames = 0; // resets frames before it draws slashing
                     moveKeys.slice.pressed = true;
+                    projectiles.forEach((projectile) => { // resets sliced condition after every slice input
+                        projectile.sliced = false;
+                    })
                 }
                 break;
             case "KeyA":
